@@ -69,6 +69,19 @@ func ParseURL(link string) (model.Info, error) {
 		return info, nil
 	}
 
+	if strings.HasSuffix(parsed.Host, "rumble.com") {
+		kind, id, err := parseRumbleURL(parsed)
+		if err != nil {
+			return model.Info{}, err
+		}
+
+		info.Provider = model.ProviderRumble
+		info.LinkType = kind
+		info.ItemID = id
+
+		return info, nil
+	}
+
 	return model.Info{}, errors.New("unsupported URL host")
 }
 
@@ -201,6 +214,35 @@ func parseVimeoURL(parsed *url.URL) (model.Type, string, error) {
 	}
 
 	return "", "", errors.New("unsupported link format")
+}
+
+func parseRumbleURL(parsed *url.URL) (model.Type, string, error) {
+	path := strings.Trim(parsed.EscapedPath(), "/")
+	if path == "" {
+		return "", "", errors.New("invalid rumble link path")
+	}
+
+	parts := strings.Split(path, "/")
+	if len(parts) < 2 {
+		return "", "", errors.New("unsupported rumble link format")
+	}
+
+	switch parts[0] {
+	case "c":
+		if parts[1] == "" {
+			return "", "", errors.New("invalid rumble channel id")
+		}
+
+		return model.TypeChannel, parts[1], nil
+	case "user":
+		if parts[1] == "" {
+			return "", "", errors.New("invalid rumble user id")
+		}
+
+		return model.TypeUser, parts[1], nil
+	default:
+		return "", "", errors.New("unsupported rumble link format")
+	}
 }
 
 func parseSoundcloudURL(parsed *url.URL) (model.Type, string, error) {

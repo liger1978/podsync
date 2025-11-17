@@ -42,6 +42,20 @@ type PlaylistMetadata struct {
 	ChannelId   string                      `json:"channel_id"`
 	ChannelUrl  string                      `json:"channel_url"`
 	WebpageUrl  string                      `json:"webpage_url"`
+	Entries     []*PlaylistEntry            `json:"entries"`
+}
+
+type PlaylistEntry struct {
+	ID               string                      `json:"id"`
+	Title            string                      `json:"title"`
+	Description      string                      `json:"description"`
+	Duration         float64                     `json:"duration"`
+	Timestamp        int64                       `json:"timestamp"`
+	ReleaseTimestamp int64                       `json:"release_timestamp"`
+	UploadDate       string                      `json:"upload_date"`
+	WebpageURL       string                      `json:"webpage_url"`
+	URL              string                      `json:"url"`
+	Thumbnails       []PlaylistMetadataThumbnail `json:"thumbnails"`
 }
 
 var (
@@ -177,14 +191,31 @@ func (dl *YoutubeDl) Update(ctx context.Context) error {
 }
 
 func (dl *YoutubeDl) PlaylistMetadata(ctx context.Context, url string) (metadata PlaylistMetadata, err error) {
+	return dl.playlist(ctx, url, "0")
+}
+
+func (dl *YoutubeDl) PlaylistEntries(ctx context.Context, url string, limit int) (metadata PlaylistMetadata, err error) {
+	var playlistItems string
+	if limit > 0 {
+		playlistItems = fmt.Sprintf("1:%d", limit)
+	}
+
+	return dl.playlist(ctx, url, playlistItems)
+}
+
+func (dl *YoutubeDl) playlist(ctx context.Context, url string, playlistItems string) (PlaylistMetadata, error) {
 	log.Info("getting playlist metadata for: ", url)
-	args := []string{
-		"--playlist-items", "0",
+	args := []string{}
+	if playlistItems != "" {
+		args = append(args, "--playlist-items", playlistItems)
+	}
+	args = append(args,
 		"-J",            // JSON output
 		"-q",            // quiet mode
 		"--no-warnings", // suppress warnings
 		url,
-	}
+	)
+
 	dl.updateLock.Lock()
 	defer dl.updateLock.Unlock()
 	output, err := dl.exec(ctx, args...)
