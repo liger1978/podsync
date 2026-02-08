@@ -29,6 +29,7 @@ type Opts struct {
 	Headless   bool   `long:"headless"`
 	Debug      bool   `long:"debug"`
 	NoBanner   bool   `long:"no-banner"`
+	DeleteFeed string `long:"delete-feed" description:"Delete a feed and its episodes from the database, then exit"`
 }
 
 const banner = `
@@ -121,6 +122,15 @@ func main() {
 			log.WithError(err).Error("failed to close database")
 		}
 	}()
+
+	if opts.DeleteFeed != "" {
+		log.Infof("deleting feed %q from database", opts.DeleteFeed)
+		if err := database.DeleteFeed(ctx, opts.DeleteFeed); err != nil {
+			log.WithError(err).Fatalf("failed to delete feed %q", opts.DeleteFeed)
+		}
+		log.Infof("feed %q deleted successfully", opts.DeleteFeed)
+		return
+	}
 
 	var storage fs.Storage
 	switch cfg.Storage.Type {
