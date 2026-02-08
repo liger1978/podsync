@@ -292,9 +292,9 @@ func buildArgs(feedConfig *feed.Config, episode *model.Episode, outputFilePath s
 
 	case model.FormatAudio:
 		// Audio, mp3, high by default
-		format := "bestaudio"
+		format := "bestaudio/best"
 		if feedConfig.Quality == model.QualityLow {
-			format = "worstaudio"
+			format = "worstaudio/worst"
 		}
 
 		args = append(args, "--extract-audio", "--audio-format", "mp3", "--format", format)
