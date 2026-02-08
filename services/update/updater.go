@@ -102,13 +102,13 @@ func (u *Manager) updateFeed(ctx context.Context, feedConfig *feed.Config) error
 		return errors.Wrapf(err, "failed to parse URL: %s", feedConfig.URL)
 	}
 
-	keyProvider, ok := u.keys[info.Provider]
-	if !ok {
-		return errors.Errorf("key provider %q not loaded", info.Provider)
+	var key string
+	if keyProvider, ok := u.keys[info.Provider]; ok {
+		key = keyProvider.Get()
 	}
 
 	// Create an updater for this feed type
-	provider, err := builder.New(ctx, info.Provider, keyProvider.Get(), u.downloader)
+	provider, err := builder.New(ctx, info.Provider, key, u.downloader)
 	if err != nil {
 		return err
 	}

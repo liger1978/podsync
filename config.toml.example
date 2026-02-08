@@ -145,6 +145,14 @@ vimeo = [ # Multiple keys will be rotated.
   # optional: this will override the default link (usually the URL address) in the generated RSS feed with another link
   link = "https://example.org"
 
+  # Example Rumble feed (no API key needed)
+  [feeds.ID2]
+  url = "https://rumble.com/c/ChannelName"
+  page_size = 50
+  update_period = "12h"
+  quality = "high"
+  format = "video"
+
 # Podsync uses local database to store feeds and episodes metadata.
 # This section is optional and usually not needed to configure unless some very specific corner cases.
 # Refer to https://dgraph.io/docs/badger/get-started/#memory-usage for documentation.
