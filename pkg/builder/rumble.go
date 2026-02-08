@@ -46,11 +46,6 @@ func (b *RumbleBuilder) Build(_ context.Context, cfg *feed.Config) (*model.Feed,
 		return nil, errors.Errorf("unsupported rumble feed type: %s", info.LinkType)
 	}
 
-	doc, err := b.fetchPage(pageURL)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch rumble page")
-	}
-
 	result := &model.Feed{
 		ItemID:    info.ItemID,
 		Provider:  info.Provider,
@@ -62,14 +57,48 @@ func (b *RumbleBuilder) Build(_ context.Context, cfg *feed.Config) (*model.Feed,
 		ItemURL:   pageURL,
 	}
 
-	b.extractFeedMetadata(doc, result)
+	var allEpisodes []*model.Episode
+	remaining := cfg.PageSize
 
-	episodes, err := b.extractEpisodes(doc, cfg.PageSize)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to extract episodes")
+	for page := 1; remaining > 0; page++ {
+		fetchURL := pageURL
+		if page > 1 {
+			fetchURL = fmt.Sprintf("%s?page=%d", pageURL, page)
+		}
+
+		log.Debugf("fetching rumble page %d: %s", page, fetchURL)
+		doc, err := b.fetchPage(fetchURL)
+		if err != nil {
+			if page == 1 {
+				return nil, errors.Wrap(err, "failed to fetch rumble page")
+			}
+			log.WithError(err).Warnf("failed to fetch rumble page %d, stopping pagination", page)
+			break
+		}
+
+		if page == 1 {
+			b.extractFeedMetadata(doc, result)
+		}
+
+		episodes, err := b.extractEpisodes(doc, remaining)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to extract episodes from page %d", page)
+		}
+
+		if len(episodes) == 0 {
+			break
+		}
+
+		allEpisodes = append(allEpisodes, episodes...)
+		remaining -= len(episodes)
+
+		// Check if there are more pages
+		if !b.hasNextPage(doc, page) {
+			break
+		}
 	}
-	result.Episodes = episodes
 
+	result.Episodes = allEpisodes
 	return result, nil
 }
 
@@ -96,6 +125,11 @@ func (b *RumbleBuilder) fetchPage(pageURL string) (*goquery.Document, error) {
 	}
 
 	return doc, nil
+}
+
+func (b *RumbleBuilder) hasNextPage(doc *goquery.Document, currentPage int) bool {
+	nextPage := fmt.Sprintf("page=%d", currentPage+1)
+	return doc.Find(fmt.Sprintf(`a[href*="%s"]`, nextPage)).Length() > 0
 }
 
 func (b *RumbleBuilder) extractFeedMetadata(doc *goquery.Document, f *model.Feed) {
