@@ -108,11 +108,6 @@ func main() {
 		}
 	}
 
-	downloader, err := ytdl.New(ctx, cfg.Downloader)
-	if err != nil {
-		log.WithError(err).Fatal("youtube-dl error")
-	}
-
 	database, err := db.NewBadger(&cfg.Database)
 	if err != nil {
 		log.WithError(err).Fatal("failed to open database")
@@ -130,6 +125,11 @@ func main() {
 		}
 		log.Infof("feed %q deleted successfully", opts.DeleteFeed)
 		return
+	}
+
+	downloader, err := ytdl.New(ctx, cfg.Downloader)
+	if err != nil {
+		log.WithError(err).Fatal("youtube-dl error")
 	}
 
 	var storage fs.Storage
