@@ -149,3 +149,50 @@ func TestParseVimeoURL_InvalidLink(t *testing.T) {
 	_, _, err = parseVimeoURL(link)
 	require.Error(t, err)
 }
+
+func TestParseRumbleURL_Channel(t *testing.T) {
+	link, _ := url.ParseRequestURI("https://rumble.com/c/ChannelName")
+	kind, id, err := parseRumbleURL(link)
+	require.NoError(t, err)
+	require.Equal(t, model.TypeChannel, kind)
+	require.Equal(t, "ChannelName", id)
+}
+
+func TestParseRumbleURL_User(t *testing.T) {
+	link, _ := url.ParseRequestURI("https://rumble.com/user/Username")
+	kind, id, err := parseRumbleURL(link)
+	require.NoError(t, err)
+	require.Equal(t, model.TypeUser, kind)
+	require.Equal(t, "Username", id)
+}
+
+func TestParseRumbleURL_InvalidLink(t *testing.T) {
+	// Bare domain
+	link, _ := url.ParseRequestURI("https://rumble.com")
+	_, _, err := parseRumbleURL(link)
+	require.Error(t, err)
+
+	// Video URL (not a channel or user)
+	link, _ = url.ParseRequestURI("https://rumble.com/v1abc-some-video.html")
+	_, _, err = parseRumbleURL(link)
+	require.Error(t, err)
+
+	// Missing ID
+	link, _ = url.ParseRequestURI("https://rumble.com/c/")
+	_, _, err = parseRumbleURL(link)
+	require.Error(t, err)
+}
+
+func TestParseURL_Rumble(t *testing.T) {
+	info, err := ParseURL("https://rumble.com/c/ChannelName")
+	require.NoError(t, err)
+	require.Equal(t, model.ProviderRumble, info.Provider)
+	require.Equal(t, model.TypeChannel, info.LinkType)
+	require.Equal(t, "ChannelName", info.ItemID)
+
+	info, err = ParseURL("https://rumble.com/user/Username")
+	require.NoError(t, err)
+	require.Equal(t, model.ProviderRumble, info.Provider)
+	require.Equal(t, model.TypeUser, info.LinkType)
+	require.Equal(t, "Username", info.ItemID)
+}

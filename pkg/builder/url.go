@@ -69,6 +69,19 @@ func ParseURL(link string) (model.Info, error) {
 		return info, nil
 	}
 
+	if strings.HasSuffix(parsed.Host, "rumble.com") {
+		kind, id, err := parseRumbleURL(parsed)
+		if err != nil {
+			return model.Info{}, err
+		}
+
+		info.Provider = model.ProviderRumble
+		info.LinkType = kind
+		info.ItemID = id
+
+		return info, nil
+	}
+
 	return model.Info{}, errors.New("unsupported URL host")
 }
 
@@ -240,4 +253,24 @@ func parseTwitchURL(parsed *url.URL) (model.Type, string, error) {
 	}
 
 	return kind, id, nil
+}
+
+func parseRumbleURL(parsed *url.URL) (model.Type, string, error) {
+	path := parsed.EscapedPath()
+	parts := strings.Split(path, "/")
+
+	if len(parts) < 3 || parts[2] == "" {
+		return "", "", errors.Errorf("invalid rumble URL path: %s", path)
+	}
+
+	switch parts[1] {
+	case "c":
+		// https://rumble.com/c/ChannelName
+		return model.TypeChannel, parts[2], nil
+	case "user":
+		// https://rumble.com/user/Username
+		return model.TypeUser, parts[2], nil
+	default:
+		return "", "", errors.Errorf("unsupported rumble URL format: %s", path)
+	}
 }

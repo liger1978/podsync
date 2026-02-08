@@ -9,7 +9,7 @@
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/mxpv)](https://github.com/sponsors/mxpv)
 [![Patreon](https://img.shields.io/badge/support-patreon-E6461A.svg)](https://www.patreon.com/podsync)
 
-Podsync - is a simple, free service that lets you listen to any YouTube / Vimeo channels, playlists or user videos in
+Podsync - is a simple, free service that lets you listen to any YouTube / Vimeo / Rumble channels, playlists or user videos in
 podcast format.
 
 Podcast applications have a rich functionality for content delivery - automatic download of new episodes,
@@ -19,7 +19,7 @@ any device in podcast client.
 
 ## ✨ Features
 
-- Works with YouTube and Vimeo.
+- Works with YouTube, Vimeo, and Rumble (no API key needed for Rumble).
 - Supports feeds configuration: video/audio, high/low quality, max video height, etc.
 - mp3 encoding
 - Update scheduler supports cron expressions
