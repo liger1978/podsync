@@ -69,7 +69,7 @@ func ParseURL(link string) (model.Info, error) {
 		return info, nil
 	}
 
-	if strings.HasSuffix(parsed.Host, "rumble.com") {
+	if parsed.Host == "rumble.com" || strings.HasSuffix(parsed.Host, ".rumble.com") {
 		kind, id, err := parseRumbleURL(parsed)
 		if err != nil {
 			return model.Info{}, err

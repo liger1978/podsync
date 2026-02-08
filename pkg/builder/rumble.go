@@ -30,7 +30,7 @@ func NewRumbleBuilder() (*RumbleBuilder, error) {
 	}, nil
 }
 
-func (b *RumbleBuilder) Build(_ context.Context, cfg *feed.Config) (*model.Feed, error) {
+func (b *RumbleBuilder) Build(ctx context.Context, cfg *feed.Config) (*model.Feed, error) {
 	info, err := ParseURL(cfg.URL)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse URL")
@@ -67,7 +67,7 @@ func (b *RumbleBuilder) Build(_ context.Context, cfg *feed.Config) (*model.Feed,
 		}
 
 		log.Debugf("fetching rumble page %d: %s", page, fetchURL)
-		doc, err := b.fetchPage(fetchURL)
+		doc, err := b.fetchPage(ctx, fetchURL)
 		if err != nil {
 			if page == 1 {
 				return nil, errors.Wrap(err, "failed to fetch rumble page")
@@ -102,8 +102,8 @@ func (b *RumbleBuilder) Build(_ context.Context, cfg *feed.Config) (*model.Feed,
 	return result, nil
 }
 
-func (b *RumbleBuilder) fetchPage(pageURL string) (*goquery.Document, error) {
-	req, err := http.NewRequest("GET", pageURL, nil)
+func (b *RumbleBuilder) fetchPage(ctx context.Context, pageURL string) (*goquery.Document, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", pageURL, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create request")
 	}
