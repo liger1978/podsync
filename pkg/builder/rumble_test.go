@@ -2,6 +2,7 @@ package builder
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -137,7 +138,7 @@ func TestRumbleBuilder_ExtractEpisodes(t *testing.T) {
 	require.Len(t, episodes, 2)
 
 	ep1 := episodes[0]
-	assert.Equal(t, "/v1abc-video-one.html", ep1.ID)
+	assert.Equal(t, "v1abc", ep1.ID)
 	assert.Equal(t, "Video One", ep1.Title)
 	assert.Equal(t, "https://example.com/thumb1.jpg", ep1.Thumbnail)
 	assert.Equal(t, int64(754), ep1.Duration) // 12*60 + 34
@@ -146,7 +147,7 @@ func TestRumbleBuilder_ExtractEpisodes(t *testing.T) {
 	assert.False(t, ep1.PubDate.IsZero())
 
 	ep2 := episodes[1]
-	assert.Equal(t, "/v2def-video-two.html", ep2.ID)
+	assert.Equal(t, "v2def", ep2.ID)
 	assert.Equal(t, "Video Two", ep2.Title)
 	assert.Equal(t, int64(3930), ep2.Duration) // 1*3600 + 5*60 + 30
 }
@@ -200,9 +201,28 @@ func TestParseDuration(t *testing.T) {
 	}
 }
 
+func TestExtractRumbleVideoID(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"/v1abc-some-title.html", "v1abc"},
+		{"/v2gxmb2-rwanda-was-never-supposed-to-work.html", "v2gxmb2"},
+		{"/v123.html", "v123"},
+		{"/noprefix.html", "noprefix"},
+		{"", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			assert.Equal(t, tt.expected, extractRumbleVideoID(tt.input))
+		})
+	}
+}
+
 func TestRumbleBuilder_Build_Integration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
+	if os.Getenv("PODSYNC_INTEGRATION") == "" {
+		t.Skip("skipping integration test; set PODSYNC_INTEGRATION=1 to run")
 	}
 
 	b, err := NewRumbleBuilder()

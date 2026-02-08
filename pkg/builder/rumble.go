@@ -150,11 +150,15 @@ func (b *RumbleBuilder) parseVideoItem(s *goquery.Selection) (*model.Episode, er
 		return nil, errors.New("no video link found")
 	}
 
-	// Strip query parameters from the href for a clean video ID
-	videoPath := href
-	if idx := strings.Index(videoPath, "?"); idx != -1 {
-		videoPath = videoPath[:idx]
+	// Strip query parameters from the href
+	cleanPath := href
+	if idx := strings.Index(cleanPath, "?"); idx != -1 {
+		cleanPath = cleanPath[:idx]
 	}
+
+	// Extract the stable video token (e.g. "v1abc" from "/v1abc-some-title.html")
+	// to use as the episode ID, since the slug portion can change if the title is edited.
+	videoID := extractRumbleVideoID(cleanPath)
 
 	videoURL := rumbleBaseURL + href
 	title := strings.TrimSpace(s.Find("h3.thumbnail__title").Text())
@@ -172,7 +176,7 @@ func (b *RumbleBuilder) parseVideoItem(s *goquery.Selection) (*model.Episode, er
 	durationSeconds := parseDuration(durationText)
 
 	return &model.Episode{
-		ID:        videoPath,
+		ID:        videoID,
 		Title:     title,
 		Thumbnail: thumbnail,
 		Duration:  durationSeconds,
@@ -205,4 +209,20 @@ func parseDuration(s string) int64 {
 	default:
 		return 0
 	}
+}
+
+// extractRumbleVideoID extracts the stable video token from a Rumble video path.
+// For example, "/v1abc-some-title.html" returns "v1abc".
+// The slug after the first hyphen can change if the video title is edited,
+// but the token prefix remains stable.
+func extractRumbleVideoID(path string) string {
+	// Remove leading slash
+	name := strings.TrimPrefix(path, "/")
+	// Remove .html suffix
+	name = strings.TrimSuffix(name, ".html")
+	// Extract token before first hyphen (e.g. "v1abc" from "v1abc-some-title")
+	if idx := strings.Index(name, "-"); idx > 0 {
+		return name[:idx]
+	}
+	return name
 }
